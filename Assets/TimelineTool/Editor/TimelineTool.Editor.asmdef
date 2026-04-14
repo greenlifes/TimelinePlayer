@@ -1,0 +1,19 @@
+{
+    "name": "TimelineTool.Editor",
+    "rootNamespace": "TimelineTool.Editor",
+    "references": [
+        "TimelineTool.Runtime",
+        "Unity.Timeline"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
