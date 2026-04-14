@@ -3,7 +3,8 @@
     "rootNamespace": "TimelineTool.Editor",
     "references": [
         "TimelineTool.Runtime",
-        "Unity.Timeline"
+        "Unity.Timeline",
+        "Unity.Timeline.Editor"
     ],
     "includePlatforms": [
         "Editor"

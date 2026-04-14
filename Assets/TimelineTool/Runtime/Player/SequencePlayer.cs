@@ -151,7 +151,7 @@ namespace TimelineTool
 
         private List<(ClipData clip, GameObject target)> BuildResolvedClipList()
         {
-            var list = new List<(ClipData, GameObject)>();
+            var list = new List<(ClipData clip, GameObject target)>();
             foreach (var track in sequenceData.tracks)
             {
                 _bindingMap.TryGetValue(track.bindingKey, out var target);
