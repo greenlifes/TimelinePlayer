@@ -7,27 +7,30 @@ using UnityEngine;
 namespace TimelineTool
 {
     /// <summary>
-    /// Time-based linear playback engine that reads a TimelineSequenceData ScriptableObject
-    /// and drives AbstractActionData clips using UniTask. No Unity.Timeline dependency.
+    /// Time-based linear playback engine.
+    /// Reads a TimelineSequenceData ScriptableObject and drives AbstractActionData
+    /// clips via UniTask. Each track binding maps a key to a ReferenceHub,
+    /// which is passed directly into OnEnter / OnUpdate / OnExit.
     /// </summary>
     public class SequencePlayer : MonoBehaviour
     {
         [SerializeField] private TimelineSequenceData sequenceData;
+        [SerializeField] private ReferenceHub referenceHub;
 
         [Serializable]
-        public class TrackBinding
+        public class OverrideBinding
         {
-            [Tooltip("Must match the bindingKey in TrackData.")]
+            [Tooltip("Must match the bindingKey in TrackData (= Timeline track name).")]
             public string bindingKey;
-            public GameObject target;
+            public ReferenceHub OverrideHub;
         }
 
-        [SerializeField] private List<TrackBinding> bindings = new();
+        [SerializeField] private List<OverrideBinding> bindings = new();
 
         // -----------------------------------------------------------------------
 
         private CancellationTokenSource _cts;
-        private Dictionary<string, GameObject> _bindingMap;
+        private Dictionary<string, ReferenceHub> _bindingMap;
 
         public bool IsPlaying { get; private set; }
 
@@ -37,7 +40,7 @@ namespace TimelineTool
         public void Play()
         {
             if (IsPlaying) Stop();
-
+            RebuildBindingMap();
             _cts = new CancellationTokenSource();
             PlayAsync(_cts.Token).Forget();
         }
@@ -52,16 +55,16 @@ namespace TimelineTool
 
         // -----------------------------------------------------------------------
 
-        private void Awake() => RebuildBindingMap();
-
-        private void OnDestroy() => Stop();
+        private void Awake()      => RebuildBindingMap();
+        private void OnDestroy()  => Stop();
 
         public void RebuildBindingMap()
         {
-            _bindingMap = new Dictionary<string, GameObject>(StringComparer.Ordinal);
+            _bindingMap = new Dictionary<string, ReferenceHub>(StringComparer.Ordinal);
             foreach (var b in bindings)
-                if (b.target != null)
-                    _bindingMap[b.bindingKey] = b.target;
+            {
+                if (b.OverrideHub != null) { _bindingMap[b.bindingKey] = b.OverrideHub; }
+            }
         }
 
         // -----------------------------------------------------------------------
@@ -76,12 +79,9 @@ namespace TimelineTool
 
             IsPlaying = true;
 
-            // Resolve bindings and flatten all clips into a single list
-            var resolvedClips = BuildResolvedClipList();
-
-            // Per-clip state flags
-            var entered = new HashSet<ClipData>(ReferenceEqualityComparer.Instance);
-            var exited  = new HashSet<ClipData>(ReferenceEqualityComparer.Instance);
+            var allClips = BuildResolvedClipList();
+            var entered  = new HashSet<ClipData>(ReferenceEqualityComparer.Instance);
+            var exited   = new HashSet<ClipData>(ReferenceEqualityComparer.Instance);
 
             float elapsed   = 0f;
             float totalTime = sequenceData.TotalDuration;
@@ -91,7 +91,7 @@ namespace TimelineTool
             {
                 if (ct.IsCancellationRequested) break;
 
-                TickFrame(resolvedClips, entered, exited, elapsed);
+                TickFrame(allClips, entered, exited, elapsed);
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
                 elapsed += Time.deltaTime;
@@ -100,12 +100,12 @@ namespace TimelineTool
             // ---- Cleanup: exit any clips still active at sequence end -----
             if (!ct.IsCancellationRequested)
             {
-                foreach (var (clip, target) in resolvedClips)
+                foreach (var (clip, hub) in allClips)
                 {
                     if (entered.Contains(clip) && !exited.Contains(clip))
                     {
                         exited.Add(clip);
-                        clip.actionData?.OnExit(target);
+                        clip.actionData?.OnExit(hub);
                     }
                 }
             }
@@ -113,64 +113,62 @@ namespace TimelineTool
             IsPlaying = false;
         }
 
-        private void TickFrame(
-            List<(ClipData clip, GameObject target)> resolvedClips,
+        private static void TickFrame(
+            List<(ClipData clip, ReferenceHub hub)> allClips,
             HashSet<ClipData> entered,
             HashSet<ClipData> exited,
             float elapsed)
         {
-            foreach (var (clip, target) in resolvedClips)
+            foreach (var (clip, hub) in allClips)
             {
                 if (clip.actionData == null) continue;
 
-                bool inRange   = elapsed >= clip.StartTime && elapsed < clip.EndTime;
+                bool inRange    = elapsed >= clip.StartTime && elapsed < clip.EndTime;
                 bool hasEntered = entered.Contains(clip);
                 bool hasExited  = exited.Contains(clip);
 
                 if (hasExited) continue;
 
-                // --- OnEnter ---
                 if (inRange && !hasEntered)
                 {
                     entered.Add(clip);
-                    clip.actionData.OnEnter(target);
+                    clip.actionData.OnEnter(hub);
                 }
 
-                // --- OnUpdate ---
-                if (inRange && entered.Contains(clip))
-                    clip.actionData.OnUpdate(target, clip.GetNormalizedTime(elapsed));
+                if (inRange && hasEntered)
+                    clip.actionData.OnUpdate(hub, clip.GetNormalizedTime(elapsed));
 
-                // --- OnExit: clip passed its end frame ---
                 if (!inRange && hasEntered && elapsed >= clip.EndTime)
                 {
                     exited.Add(clip);
-                    clip.actionData.OnExit(target);
+                    clip.actionData.OnExit(hub);
                 }
             }
         }
 
-        private List<(ClipData clip, GameObject target)> BuildResolvedClipList()
+        private List<(ClipData clip, ReferenceHub hub)> BuildResolvedClipList()
         {
-            var list = new List<(ClipData clip, GameObject target)>();
+            var list = new List<(ClipData clip, ReferenceHub hub)>();
             foreach (var track in sequenceData.tracks)
             {
-                _bindingMap.TryGetValue(track.bindingKey, out var target);
+                var overrided = _bindingMap.TryGetValue(track.bindingKey, out var hub);
                 foreach (var clip in track.clips)
-                    list.Add((clip, target));
+                {
+                    list.Add((clip, overrided? hub : referenceHub));
+                }
             }
-            // Sort by start frame so OnEnter fires in chronological order
             list.Sort((a, b) => a.clip.startFrame.CompareTo(b.clip.startFrame));
             return list;
         }
 
         // -----------------------------------------------------------------------
-        // Equality comparer by reference so HashSet works even if ClipData is a class
 
         private sealed class ReferenceEqualityComparer : IEqualityComparer<ClipData>
         {
             public static readonly ReferenceEqualityComparer Instance = new();
-            public bool Equals(ClipData x, ClipData y) => ReferenceEquals(x, y);
-            public int GetHashCode(ClipData obj) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
+            public bool Equals(ClipData x, ClipData y)  => ReferenceEquals(x, y);
+            public int  GetHashCode(ClipData obj) =>
+                System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
         }
     }
 }

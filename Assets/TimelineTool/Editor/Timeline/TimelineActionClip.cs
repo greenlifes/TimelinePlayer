@@ -12,7 +12,8 @@ namespace TimelineTool.Editor
     [System.Serializable]
     public class TimelineActionClip : PlayableAsset, ITimelineClipAsset
     {
-        [Tooltip("The action ScriptableObject this clip represents.")]
+        [Tooltip("Inline action instance serialized directly into this clip asset.")]
+        [UnityEngine.SerializeReference]
         public AbstractActionData actionData;
 
         public ClipCaps clipCaps => ClipCaps.None;

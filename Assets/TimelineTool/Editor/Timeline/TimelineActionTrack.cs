@@ -11,7 +11,7 @@ namespace TimelineTool.Editor
     /// </summary>
     [TrackColor(0.18f, 0.78f, 0.42f)]
     [TrackClipType(typeof(TimelineActionClip))]
-    [TrackBindingType(typeof(GameObject))]
+    [TrackBindingType(typeof(ReferenceHub))]
     public class TimelineActionTrack : TrackAsset
     {
         public override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount)
@@ -20,7 +20,7 @@ namespace TimelineTool.Editor
             foreach (var clip in GetClips())
             {
                 if (clip.asset is TimelineActionClip actionClip && actionClip.actionData != null)
-                    clip.displayName = actionClip.actionData.name;
+                    clip.displayName = actionClip.actionData.GetType().Name;
             }
 
             return ScriptPlayable<TimelineActionMixerBehaviour>.Create(graph, inputCount);

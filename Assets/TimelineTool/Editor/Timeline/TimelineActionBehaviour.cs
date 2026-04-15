@@ -5,13 +5,15 @@ namespace TimelineTool.Editor
 {
     /// <summary>
     /// PlayableBehaviour that drives AbstractActionData during Timeline preview in the Editor.
-    /// This class is Editor-only; at runtime the SequencePlayer handles playback instead.
+    /// The bound object is a ReferenceHub (TrackBindingType = ReferenceHub),
+    /// passed directly as playerData into each lifecycle call.
     /// </summary>
     public class TimelineActionBehaviour : PlayableBehaviour
     {
         public AbstractActionData actionData;
 
-        private bool _hasEntered;
+        private bool         _hasEntered;
+        private ReferenceHub _hub;
 
         public override void OnBehaviourPlay(Playable playable, FrameData info)
         {
@@ -22,12 +24,12 @@ namespace TimelineTool.Editor
         {
             if (actionData == null) return;
 
-            var target = playerData as GameObject;
+            _hub = playerData as ReferenceHub;
 
             if (!_hasEntered)
             {
                 _hasEntered = true;
-                actionData.OnEnter(target);
+                actionData.OnEnter(_hub);
             }
 
             double duration = playable.GetDuration();
@@ -35,17 +37,15 @@ namespace TimelineTool.Editor
                 ? Mathf.Clamp01((float)(playable.GetTime() / duration))
                 : 1f;
 
-            actionData.OnUpdate(target, normalizedTime);
+            actionData.OnUpdate(_hub, normalizedTime);
         }
 
         public override void OnBehaviourPause(Playable playable, FrameData info)
         {
             if (!_hasEntered) return;
-
             _hasEntered = false;
-
-            var target = info.output.GetUserData() as GameObject;
-            actionData?.OnExit(target);
+            actionData?.OnExit(_hub);
+            _hub = null;
         }
     }
 }

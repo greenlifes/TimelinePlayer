@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 070b827149f90d14d853329ef1214df8, type: 3}
+  m_Name: TimeLineData
+  m_EditorClassIdentifier: TimelineTool.Runtime::TimelineTool.TimelineSequenceData
+  totalFrames: 1478
+  tracks:
+  - trackName: Timeline Action Track
+    bindingKey: Timeline Action Track
+    clips:
+    - startFrame: 30
+      durationFrames: 60
+      actionData:
+        rid: 6299564252322070680
+    - startFrame: 1178
+      durationFrames: 300
+      actionData:
+        rid: 6299564252322070681
+  - trackName: Timeline Action Track (1)
+    bindingKey: Timeline Action Track (1)
+    clips:
+    - startFrame: 61
+      durationFrames: 89
+      actionData:
+        rid: 6299564252322070682
+  - trackName: Timeline Action Track (2)
+    bindingKey: Timeline Action Track (2)
+    clips:
+    - startFrame: 90
+      durationFrames: 30
+      actionData:
+        rid: 6299564252322070683
+  sourceTimelineGuid: e3b63bdb55c6b6c43a5bdd821c2e874c
+  references:
+    version: 2
+    RefIds:
+    - rid: 6299564252322070680
+      type: {class: GameObjectActiveAction, ns: TimelineTool.Actions, asm: TimelineTool.Runtime}
+      data:
+        targetKey: Cube
+        activeOnEnter: 1
+        activeOnExit: 0
+    - rid: 6299564252322070681
+      type: {class: GameObjectActiveAction, ns: TimelineTool.Actions, asm: TimelineTool.Runtime}
+      data:
+        targetKey: 
+        activeOnEnter: 1
+        activeOnExit: 0
+    - rid: 6299564252322070682
+      type: {class: GameObjectActiveAction, ns: TimelineTool.Actions, asm: TimelineTool.Runtime}
+      data:
+        targetKey: Move
+        activeOnEnter: 1
+        activeOnExit: 0
+    - rid: 6299564252322070683
+      type: {class: GameObjectMoveAction, ns: TimelineTool.Actions, asm: TimelineTool.Runtime}
+      data:
+        targetKey: Move2
+        returnOrigin: 1
+        MoveDistance: 5
+        MoveDirection: {x: 0, y: 0, z: 1}

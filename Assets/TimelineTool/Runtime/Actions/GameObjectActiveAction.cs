@@ -3,31 +3,27 @@ using UnityEngine;
 namespace TimelineTool.Actions
 {
     /// <summary>
-    /// Example action: activates/deactivates the bound GameObject on enter/exit.
-    /// Create via: Assets > Create > TimelineTool > Actions > GameObject Active
+    /// Activates / deactivates a GameObject from the bound ReferenceHub on enter and exit.
+    /// Each ClipData stores its own independent instance of this class.
     /// </summary>
-    [CreateAssetMenu(menuName = "TimelineTool/Actions/GameObject Active", fileName = "GameObjectActiveAction")]
+    [System.Serializable]
     public class GameObjectActiveAction : AbstractActionData
     {
+        [Tooltip("Key in the bound ReferenceHub pointing to the target GameObject.")]
+        public string targetKey;
+
         [Tooltip("SetActive value when the clip starts.")]
         public bool activeOnEnter = true;
 
         [Tooltip("SetActive value when the clip ends.")]
         public bool activeOnExit = false;
 
-        public override void OnEnter(GameObject target)
-        {
-            target?.SetActive(activeOnEnter);
-        }
+        public override void OnEnter(ReferenceHub hub)
+            => hub?.Get<GameObjectEntry>(targetKey)?.Value.SetActive(activeOnEnter);
 
-        public override void OnUpdate(GameObject target, float normalizedTime)
-        {
-            // No per-frame logic required for a simple activation toggle.
-        }
+        public override void OnUpdate(ReferenceHub hub, float normalizedTime) { }
 
-        public override void OnExit(GameObject target)
-        {
-            target?.SetActive(activeOnExit);
-        }
+        public override void OnExit(ReferenceHub hub)
+            => hub?.Get<GameObjectEntry>(targetKey)?.Value.SetActive(activeOnExit);
     }
 }

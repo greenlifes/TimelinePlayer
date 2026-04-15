@@ -15,6 +15,13 @@ namespace TimelineTool
 
         public List<TrackData> tracks = new();
 
+        /// <summary>
+        /// GUID of the source .playable asset. Used by the exporter to locate
+        /// this asset after a rename (so the renamed file is updated in-place).
+        /// </summary>
+        [HideInInspector]
+        public string sourceTimelineGuid;
+
         /// <summary>Total duration in seconds.</summary>
         public float TotalDuration => totalFrames / 60f;
     }

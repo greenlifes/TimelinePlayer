@@ -5,6 +5,7 @@ namespace TimelineTool
     public enum ReferenceType
     {
         GameObject,
+        Transform,
         MonoBehaviour,
         Int,
         Float,
@@ -16,14 +17,28 @@ namespace TimelineTool
     }
 
     // -----------------------------------------------------------------------
-    // Non-generic base — required so ReferenceHub can hold a List of mixed types.
-    // Unity's [SerializeReference] resolves the concrete type at runtime.
+    // Non-generic base — required so ReferenceHub can hold a lookup of mixed types.
+    // Each concrete type is stored in its own typed list in ReferenceHub.
     // -----------------------------------------------------------------------
     [System.Serializable]
     public abstract class ReferenceEntryBase
     {
-        public string        Key;
-        public ReferenceType Type;
+        public string Key;
+
+        // Maps ReferenceType → serialized field name + display label
+        public static readonly (ReferenceType type, string propName, string label)[] TypeMeta =
+        {
+            (ReferenceType.GameObject,    "gameObjectEntries",    "GameObject"),
+            (ReferenceType.Transform,     "transformEntries",     "Transform"),
+            (ReferenceType.MonoBehaviour, "monoBehaviourEntries", "MonoBehaviour"),
+            (ReferenceType.Int,           "intEntries",           "Int"),
+            (ReferenceType.Float,         "floatEntries",         "Float"),
+            (ReferenceType.Bool,          "boolEntries",          "Bool"),
+            (ReferenceType.String,        "stringEntries",        "String"),
+            (ReferenceType.Vector2,       "vector2Entries",       "Vector2"),
+            (ReferenceType.Vector3,       "vector3Entries",       "Vector3"),
+            (ReferenceType.Color,         "colorEntries",         "Color"),
+        };
     }
 
     // -----------------------------------------------------------------------
@@ -44,6 +59,13 @@ namespace TimelineTool
     {
         [SerializeField] private GameObject _value;
         public override GameObject Value => _value;
+    }
+
+    [System.Serializable]
+    public class TransformEntry : ReferenceEntry<Transform>
+    {
+        [SerializeField] private Transform _value;
+        public override Transform Value => _value;
     }
 
     [System.Serializable]

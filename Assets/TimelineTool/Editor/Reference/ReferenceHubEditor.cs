@@ -8,183 +8,99 @@ namespace TimelineTool.Editor
     [CustomEditor(typeof(ReferenceHub))]
     public class ReferenceHubEditor : UnityEditor.Editor
     {
-        private ReorderableList    _list;
-        private SerializedProperty _entriesProp;
+        private readonly Dictionary<string, SerializedProperty> _props = new();
+        private readonly Dictionary<string, ReorderableList>    _lists = new();
+        private ReferenceType _addType = ReferenceType.GameObject;
 
-        private const float RowH   = 20f;
-        private const float RowPad = 4f;
-
-        private const float KeyRatio  = 0.30f;
-        private const float TypeRatio = 0.25f;
+        private const float RowH     = 20f;
+        private const float RowPad   = 4f;
+        private const float KeyRatio = 0.40f;
 
         // -----------------------------------------------------------------------
 
         private void OnEnable()
         {
-            _entriesProp = serializedObject.FindProperty("entries");
-            BuildList();
+            foreach (var (_, propName, label) in ReferenceEntryBase.TypeMeta)
+            {
+                var prop = serializedObject.FindProperty(propName);
+                if (prop == null) continue;   // field missing or compile error — skip safely
+                _props[propName] = prop;
+                _lists[propName] = BuildList(prop, label);
+            }
         }
 
-        private void BuildList()
+        private ReorderableList BuildList(SerializedProperty listProp, string label)
         {
-            _list = new ReorderableList(
-                serializedObject, _entriesProp,
+            var list = new ReorderableList(
+                serializedObject, listProp,
                 draggable: true, displayHeader: true,
                 displayAddButton: true, displayRemoveButton: true);
 
-            _list.drawHeaderCallback = rect =>
+            list.drawHeaderCallback = rect =>
             {
-                float w = rect.width;
-                EditorGUI.LabelField(new Rect(rect.x,              rect.y, w * KeyRatio,  rect.height), "Key",   EditorStyles.boldLabel);
-                EditorGUI.LabelField(new Rect(rect.x + w * KeyRatio, rect.y, w * TypeRatio, rect.height), "Type",  EditorStyles.boldLabel);
-                EditorGUI.LabelField(new Rect(rect.x + w * (KeyRatio + TypeRatio), rect.y, w * (1 - KeyRatio - TypeRatio), rect.height), "Value", EditorStyles.boldLabel);
+                float w    = rect.width;
+                float keyX = w * 0.30f;
+                EditorGUI.LabelField(
+                    new Rect(rect.x, rect.y, keyX, rect.height),
+                    label, EditorStyles.boldLabel);
+                EditorGUI.LabelField(
+                    new Rect(rect.x + keyX, rect.y, w * KeyRatio, rect.height),
+                    "Key", EditorStyles.miniLabel);
+                EditorGUI.LabelField(
+                    new Rect(rect.x + keyX + w * KeyRatio, rect.y, w - keyX - w * KeyRatio, rect.height),
+                    "Value", EditorStyles.miniLabel);
             };
 
-            _list.elementHeightCallback = _ => RowH + RowPad;
+            list.elementHeightCallback = _ => RowH + RowPad;
 
-            _list.drawElementCallback = DrawRow;
+            list.drawElementCallback = (rect, index, _, _) =>
+                DrawRow(listProp, rect, index);
 
-            _list.onAddCallback = _ =>
+            list.onAddCallback = l =>
             {
-                _entriesProp.arraySize++;
-                var prop = _entriesProp.GetArrayElementAtIndex(_entriesProp.arraySize - 1);
-                prop.managedReferenceValue = CreateEntry(ReferenceType.GameObject);
+                l.serializedProperty.arraySize++;
+                var elem = l.serializedProperty.GetArrayElementAtIndex(l.serializedProperty.arraySize - 1);
+                elem.FindPropertyRelative("Key").stringValue = string.Empty;
                 serializedObject.ApplyModifiedProperties();
             };
+
+            return list;
         }
 
         // -----------------------------------------------------------------------
 
-        private void DrawRow(Rect rect, int index, bool isActive, bool isFocused)
+        private void DrawRow(SerializedProperty listProp, Rect rect, int index)
         {
-            var prop  = _entriesProp.GetArrayElementAtIndex(index);
-            var entry = prop.managedReferenceValue as ReferenceEntryBase;
-            if (entry == null) return;
+            var elem = listProp.GetArrayElementAtIndex(index);
+            rect.y      += RowPad * 0.5f;
+            rect.height  = RowH;
 
-            rect.y     += RowPad * 0.5f;
-            rect.height = RowH;
+            float keyW = rect.width * KeyRatio;
+            float valW = rect.width - keyW - 6f;
 
-            float w    = rect.width;
-            float keyW = w * KeyRatio;
-            float typW = w * TypeRatio;
-            float valW = w - keyW - typW - 6f;
+            var keyRect = new Rect(rect.x,        rect.y, keyW - 3f, rect.height);
+            var valRect = new Rect(rect.x + keyW, rect.y, valW,      rect.height);
 
-            var keyRect  = new Rect(rect.x,            rect.y, keyW - 3, rect.height);
-            var typeRect = new Rect(rect.x + keyW,     rect.y, typW - 3, rect.height);
-            var valRect  = new Rect(rect.x + keyW + typW, rect.y, valW,  rect.height);
+            var keyProp = elem.FindPropertyRelative("Key");
 
-            // -- Key (highlight duplicate in red) ----------------------------
-            bool isDupe   = IsDuplicateKey(index, entry.Key);
+            bool isDupe   = IsDuplicateKey(listProp, index, keyProp?.stringValue);
             var prevColor = GUI.color;
             if (isDupe) GUI.color = new Color(1f, 0.45f, 0.45f);
-            EditorGUI.PropertyField(keyRect, prop.FindPropertyRelative("Key"), GUIContent.none);
+            EditorGUI.PropertyField(keyRect, keyProp, GUIContent.none);
             GUI.color = prevColor;
 
-            // -- Type popup (switching replaces the managed reference) -------
-            var curType = ToReferenceType(entry);
-            EditorGUI.BeginChangeCheck();
-            var newType = (ReferenceType)EditorGUI.EnumPopup(typeRect, curType);
-            if (EditorGUI.EndChangeCheck() && newType != curType)
-            {
-                var replacement = CreateEntry(newType);
-                replacement.Key = entry.Key;          // preserve key
-                prop.managedReferenceValue = replacement;
-                serializedObject.ApplyModifiedProperties();
-                return;                               // value field belongs to new instance
-            }
-
-            // -- Value field -------------------------------------------------
-            var valueProp = prop.FindPropertyRelative("_value");
+            var valueProp = elem.FindPropertyRelative("_value");
             if (valueProp == null) return;
 
-            DrawValueField(entry, valueProp, valRect);
-        }
-
-        private static void DrawValueField(
-            ReferenceEntryBase entry, SerializedProperty valueProp, Rect rect)
-        {
-            switch (entry)
+            if (valueProp.propertyType == SerializedPropertyType.Vector4)
             {
-                case GameObjectEntry:
-                    EditorGUI.ObjectField(rect, valueProp, typeof(GameObject), GUIContent.none);
-                    break;
-
-                case MonoBehaviourEntry:
-                    EditorGUI.ObjectField(rect, valueProp, typeof(MonoBehaviour), GUIContent.none);
-                    break;
-
-                case IntEntry:
-                case FloatEntry:
-                case StringEntry:
-                case Vector2Entry:
-                case Vector3Entry:
-                    EditorGUI.PropertyField(rect, valueProp, GUIContent.none);
-                    break;
-
-                case BoolEntry:
-                    var toggle = new Rect(rect.x + rect.width * 0.5f - 8f, rect.y, 16f, rect.height);
-                    valueProp.boolValue = EditorGUI.Toggle(toggle, valueProp.boolValue);
-                    break;
-
-                case ColorEntry:
-                    EditorGUI.PropertyField(rect, valueProp, GUIContent.none);
-                    break;
+                EditorGUI.BeginChangeCheck();
+                var newVal = EditorGUI.Vector4Field(valRect, GUIContent.none, valueProp.vector4Value);
+                if (EditorGUI.EndChangeCheck())
+                    valueProp.vector4Value = newVal;
             }
-        }
-
-        // -----------------------------------------------------------------------
-        // Helpers
-
-        private static ReferenceEntryBase CreateEntry(ReferenceType type) => type switch
-        {
-            ReferenceType.GameObject    => new GameObjectEntry    { Type = ReferenceType.GameObject    },
-            ReferenceType.MonoBehaviour => new MonoBehaviourEntry { Type = ReferenceType.MonoBehaviour },
-            ReferenceType.Int           => new IntEntry           { Type = ReferenceType.Int           },
-            ReferenceType.Float         => new FloatEntry         { Type = ReferenceType.Float         },
-            ReferenceType.Bool          => new BoolEntry          { Type = ReferenceType.Bool          },
-            ReferenceType.String        => new StringEntry        { Type = ReferenceType.String        },
-            ReferenceType.Vector2       => new Vector2Entry       { Type = ReferenceType.Vector2       },
-            ReferenceType.Vector3       => new Vector3Entry       { Type = ReferenceType.Vector3       },
-            ReferenceType.Color         => new ColorEntry         { Type = ReferenceType.Color         },
-            _                           => new GameObjectEntry    { Type = ReferenceType.GameObject    },
-        };
-
-        private static ReferenceType ToReferenceType(ReferenceEntryBase entry) => entry switch
-        {
-            GameObjectEntry    => ReferenceType.GameObject,
-            MonoBehaviourEntry => ReferenceType.MonoBehaviour,
-            IntEntry           => ReferenceType.Int,
-            FloatEntry         => ReferenceType.Float,
-            BoolEntry          => ReferenceType.Bool,
-            StringEntry        => ReferenceType.String,
-            Vector2Entry       => ReferenceType.Vector2,
-            Vector3Entry       => ReferenceType.Vector3,
-            ColorEntry         => ReferenceType.Color,
-            _                  => ReferenceType.GameObject,
-        };
-
-        private bool IsDuplicateKey(int index, string key)
-        {
-            if (string.IsNullOrEmpty(key)) return false;
-            for (int i = 0; i < _entriesProp.arraySize; i++)
-            {
-                if (i == index) continue;
-                var e = _entriesProp.GetArrayElementAtIndex(i).managedReferenceValue as ReferenceEntryBase;
-                if (e?.Key == key) return true;
-            }
-            return false;
-        }
-
-        private bool HasAnyDuplicateKey()
-        {
-            var seen = new HashSet<string>();
-            for (int i = 0; i < _entriesProp.arraySize; i++)
-            {
-                var e = _entriesProp.GetArrayElementAtIndex(i).managedReferenceValue as ReferenceEntryBase;
-                if (e != null && !string.IsNullOrEmpty(e.Key) && !seen.Add(e.Key))
-                    return true;
-            }
-            return false;
+            else
+                EditorGUI.PropertyField(valRect, valueProp, GUIContent.none);
         }
 
         // -----------------------------------------------------------------------
@@ -192,12 +108,79 @@ namespace TimelineTool.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            _list.DoLayoutList();
-            if (HasAnyDuplicateKey())
+
+            bool anyDupe = false;
+
+            // Draw only non-empty lists
+            foreach (var (_, propName, _) in ReferenceEntryBase.TypeMeta)
+            {
+                if (!_props.TryGetValue(propName, out var prop) || prop.arraySize == 0) continue;
+
+                _lists[propName].DoLayoutList();
+                EditorGUILayout.Space(2f);
+
+                if (!anyDupe) anyDupe = HasAnyDuplicateKey(prop);
+            }
+
+            // ── Add Entry ─────────────────────────────────────────────────────
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.BeginHorizontal();
+            _addType = (ReferenceType)EditorGUILayout.EnumPopup(_addType, GUILayout.Width(140f));
+            if (GUILayout.Button("Add Entry", GUILayout.Width(90f)))
+                AddEntry(_addType);
+            EditorGUILayout.EndHorizontal();
+
+            if (anyDupe)
                 EditorGUILayout.HelpBox(
                     "Duplicate keys detected — only the first entry will be used.",
                     MessageType.Warning);
+
             serializedObject.ApplyModifiedProperties();
+        }
+
+        // -----------------------------------------------------------------------
+
+        private void AddEntry(ReferenceType type)
+        {
+            foreach (var (t, propName, _) in ReferenceEntryBase.TypeMeta)
+            {
+                if (t != type) continue;
+                if (!_props.TryGetValue(propName, out var prop)) return;
+                prop.arraySize++;
+                var elem = prop.GetArrayElementAtIndex(prop.arraySize - 1);
+                elem.FindPropertyRelative("Key").stringValue = string.Empty;
+                serializedObject.ApplyModifiedProperties();
+                return;
+            }
+        }
+
+        // Keys must be unique across ALL lists (the lookup is global)
+        private bool IsDuplicateKey(SerializedProperty listProp, int index, string key)
+        {
+            if (string.IsNullOrEmpty(key)) return false;
+
+            foreach (var (_, propName, _) in ReferenceEntryBase.TypeMeta)
+            {
+                if (!_props.TryGetValue(propName, out var prop)) continue;
+                bool isSame = SerializedProperty.EqualContents(prop, listProp);
+                for (int i = 0; i < prop.arraySize; i++)
+                {
+                    if (isSame && i == index) continue;
+                    if (prop.GetArrayElementAtIndex(i).FindPropertyRelative("Key")?.stringValue == key)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        private bool HasAnyDuplicateKey(SerializedProperty listProp)
+        {
+            for (int i = 0; i < listProp.arraySize; i++)
+            {
+                var k = listProp.GetArrayElementAtIndex(i).FindPropertyRelative("Key")?.stringValue;
+                if (IsDuplicateKey(listProp, i, k)) return true;
+            }
+            return false;
         }
     }
 }

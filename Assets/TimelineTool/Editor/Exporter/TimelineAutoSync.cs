@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 namespace TimelineTool.Editor
@@ -53,37 +55,101 @@ namespace TimelineTool.Editor
             }
 
             if (anyChanged)
-            {
-                AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-            }
         }
 
         /// <summary>
         /// Syncs (or creates) the TimelineSequenceData SO at <paramref name="soPath"/>
         /// from <paramref name="timeline"/>. Public so SequenceExporter can call it directly.
         /// </summary>
-        internal static void SyncOne(TimelineAsset timeline, string soPath)
+        internal static void SyncOne(TimelineAsset timeline, string defaultSoPath)
         {
-            var newData  = SequenceExporter.BuildSequenceData(timeline);
-            var existing = AssetDatabase.LoadAssetAtPath<TimelineSequenceData>(soPath);
+            string timelineGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(timeline));
+
+            var newData = SequenceExporter.BuildSequenceData(timeline);
+            newData.sourceTimelineGuid = timelineGuid;
+
+            // Prefer to find by stored GUID so the renamed file is updated in-place.
+            // Fall back to the default naming-convention path for backward compatibility.
+            var existing = FindExistingByTimelineGuid(timelineGuid)
+                           ?? AssetDatabase.LoadAssetAtPath<TimelineSequenceData>(defaultSoPath);
+
+            TimelineSequenceData finalAsset;
 
             if (existing != null)
             {
-                // Overwrite in-place so any existing scene references remain valid.
+                string existingPath = AssetDatabase.GetAssetPath(existing);
+                newData.name = existing.name;   // CopySerialized also copies 'name'; keep the existing filename
                 EditorUtility.CopySerialized(newData, existing);
                 EditorUtility.SetDirty(existing);
                 Object.DestroyImmediate(newData);
-                Debug.Log($"[TimelineTool] Synced → {soPath}  ({existing.tracks.Count} track(s))");
+                finalAsset = existing;
+                Debug.Log($"[TimelineTool] Synced → {existingPath}  ({existing.tracks.Count} track(s))");
             }
             else
             {
-                // Ensure the destination directory exists.
-                string dir = Path.GetDirectoryName(soPath);
+                string dir = Path.GetDirectoryName(defaultSoPath);
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
-                AssetDatabase.CreateAsset(newData, soPath);
-                Debug.Log($"[TimelineTool] Created → {soPath}  ({newData.tracks.Count} track(s))");
+                newData.name = Path.GetFileNameWithoutExtension(defaultSoPath);
+                AssetDatabase.CreateAsset(newData, defaultSoPath);
+                finalAsset = newData;
+                Debug.Log($"[TimelineTool] Created → {defaultSoPath}  ({newData.tracks.Count} track(s))");
+            }
+
+            BindSceneSequencePlayers(timeline, finalAsset);
+        }
+
+        /// <summary>
+        /// Searches the whole project for a TimelineSequenceData whose
+        /// sourceTimelineGuid matches the given GUID.
+        /// Returns null if not found.
+        /// </summary>
+        private static TimelineSequenceData FindExistingByTimelineGuid(string timelineGuid)
+        {
+            if (string.IsNullOrEmpty(timelineGuid)) return null;
+
+            foreach (var guid in AssetDatabase.FindAssets("t:TimelineSequenceData"))
+            {
+                var path  = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<TimelineSequenceData>(path);
+                if (asset != null && asset.sourceTimelineGuid == timelineGuid)
+                    return asset;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Finds all PlayableDirectors in loaded scenes that use <paramref name="timeline"/>,
+        /// then gets or adds a SequencePlayer on each and assigns <paramref name="data"/>.
+        /// </summary>
+        private static void BindSceneSequencePlayers(TimelineAsset timeline, TimelineSequenceData data)
+        {
+#pragma warning disable CS0618
+            var directors = Object.FindObjectsOfType<PlayableDirector>();
+#pragma warning restore CS0618
+            foreach (var director in directors)
+            {
+                if (director.playableAsset != timeline) continue;
+
+                var go = director.gameObject;
+                if (!go.scene.IsValid()) continue;   // skip prefab stage objects
+
+                var player = go.GetComponent<SequencePlayer>();
+                bool added = player == null;
+                if (added)
+                    player = Undo.AddComponent<SequencePlayer>(go);
+
+                var so = new SerializedObject(player);
+                so.FindProperty("sequenceData").objectReferenceValue = data;
+                so.ApplyModifiedProperties();
+
+                EditorUtility.SetDirty(player);
+                EditorSceneManager.MarkSceneDirty(go.scene);
+
+                Debug.Log(added
+                    ? $"[TimelineTool] Added SequencePlayer + assigned sequenceData on '{go.name}'"
+                    : $"[TimelineTool] Assigned sequenceData on '{go.name}'");
             }
         }
 

@@ -15,7 +15,8 @@ namespace TimelineTool
         [Tooltip("Duration in frames at 60fps.")]
         public int durationFrames;
 
-        [Tooltip("The action ScriptableObject to execute during this clip.")]
+        [Tooltip("Inline action instance — each clip owns its own independent instance.")]
+        [SerializeReference]
         public AbstractActionData actionData;
 
         public float StartTime    => startFrame / 60f;

@@ -82,8 +82,8 @@ namespace TimelineTool.Editor
 
                 bindingsProp.arraySize++;
                 var elem = bindingsProp.GetArrayElementAtIndex(bindingsProp.arraySize - 1);
-                elem.FindPropertyRelative("bindingKey").stringValue          = track.bindingKey;
-                elem.FindPropertyRelative("target").objectReferenceValue     = null;
+                elem.FindPropertyRelative("bindingKey").stringValue      = track.bindingKey;
+                elem.FindPropertyRelative("hub").objectReferenceValue    = null;
                 added++;
             }
 
