@@ -17,51 +17,57 @@ MonoBehaviour:
   - trackName: Timeline Action Track
     bindingKey: Timeline Action Track
     clips:
-    - startFrame: 30
+    - startFrame: 26
       durationFrames: 60
       actionData:
-        rid: 6299564252322070680
+        rid: 6299564252322070684
+    - startFrame: 126
+      durationFrames: 76
+      actionData:
+        rid: -2
     - startFrame: 1178
       durationFrames: 300
       actionData:
-        rid: 6299564252322070681
+        rid: 6299564252322070685
   - trackName: Timeline Action Track (1)
     bindingKey: Timeline Action Track (1)
     clips:
     - startFrame: 61
       durationFrames: 89
       actionData:
-        rid: 6299564252322070682
+        rid: 6299564252322070686
   - trackName: Timeline Action Track (2)
     bindingKey: Timeline Action Track (2)
     clips:
     - startFrame: 90
       durationFrames: 30
       actionData:
-        rid: 6299564252322070683
+        rid: 6299564252322070687
   sourceTimelineGuid: e3b63bdb55c6b6c43a5bdd821c2e874c
   references:
     version: 2
     RefIds:
-    - rid: 6299564252322070680
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 6299564252322070684
       type: {class: GameObjectActiveAction, ns: TimelineTool.Actions, asm: TimelineTool.Runtime}
       data:
         targetKey: Cube
         activeOnEnter: 1
         activeOnExit: 0
-    - rid: 6299564252322070681
+    - rid: 6299564252322070685
       type: {class: GameObjectActiveAction, ns: TimelineTool.Actions, asm: TimelineTool.Runtime}
       data:
         targetKey: 
         activeOnEnter: 1
         activeOnExit: 0
-    - rid: 6299564252322070682
+    - rid: 6299564252322070686
       type: {class: GameObjectActiveAction, ns: TimelineTool.Actions, asm: TimelineTool.Runtime}
       data:
         targetKey: Move
         activeOnEnter: 1
         activeOnExit: 0
-    - rid: 6299564252322070683
+    - rid: 6299564252322070687
       type: {class: GameObjectMoveAction, ns: TimelineTool.Actions, asm: TimelineTool.Runtime}
       data:
         targetKey: Move2

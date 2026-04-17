@@ -585,6 +585,8 @@ PlayableDirector:
     value: {fileID: 1928780966}
   - key: {fileID: -7976300835974430124, guid: e3b63bdb55c6b6c43a5bdd821c2e874c, type: 2}
     value: {fileID: 1928780966}
+  - key: {fileID: 3293666910010747531, guid: e3b63bdb55c6b6c43a5bdd821c2e874c, type: 2}
+    value: {fileID: 0}
   m_ExposedReferences:
     m_References:
     - 454afcf4c1117c7439a02ae6edff176a: {fileID: 676963660}
@@ -646,10 +648,14 @@ MonoBehaviour:
   transformEntries:
   - Key: Move2
     _value: {fileID: 2017927103}
+  - Key: 
+    _value: {fileID: 2017927103}
   monoBehaviourEntries: []
   intEntries: []
   floatEntries: []
-  boolEntries: []
+  boolEntries:
+  - Key: 
+    _value: 0
   stringEntries: []
   vector2Entries: []
   vector3Entries: []
