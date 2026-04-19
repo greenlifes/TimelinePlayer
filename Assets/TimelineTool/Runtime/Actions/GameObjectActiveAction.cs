@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TimelineTool.Actions
+namespace TimelinePlayer.Actions
 {
     /// <summary>
     /// Activates / deactivates a GameObject from the bound ReferenceHub on enter and exit.
@@ -18,12 +18,22 @@ namespace TimelineTool.Actions
         [Tooltip("SetActive value when the clip ends.")]
         public bool activeOnExit = false;
 
+        [System.NonSerialized] private bool _originalActive;
+
         public override void OnEnter(ReferenceHub hub)
-            => hub?.Get<GameObjectEntry>(targetKey)?.Value.SetActive(activeOnEnter);
+        {
+            var go = hub?.GetEntry<GameObjectEntry>(targetKey)?.Value;
+            if (go == null) return;
+            _originalActive = go.activeSelf;
+            go.SetActive(activeOnEnter);
+        }
 
         public override void OnUpdate(ReferenceHub hub, float normalizedTime) { }
 
         public override void OnExit(ReferenceHub hub)
-            => hub?.Get<GameObjectEntry>(targetKey)?.Value.SetActive(activeOnExit);
+            => hub?.GetEntry<GameObjectEntry>(targetKey)?.Value.SetActive(activeOnExit);
+
+        public override void OnCancel(ReferenceHub hub)
+            => hub?.GetEntry<GameObjectEntry>(targetKey)?.Value.SetActive(_originalActive);
     }
 }

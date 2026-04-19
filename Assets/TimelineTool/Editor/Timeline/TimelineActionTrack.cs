@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace TimelineTool.Editor
+namespace TimelinePlayer.Editor
 {
     /// <summary>
     /// Custom Timeline track that holds TimelineActionClips.

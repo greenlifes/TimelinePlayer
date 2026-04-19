@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace TimelineTool
+namespace TimelinePlayer
 {
     /// <summary>
     /// Root ScriptableObject that stores the full sequence exported from a Unity Timeline.

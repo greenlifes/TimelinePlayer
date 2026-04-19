@@ -1,0 +1,4 @@
+﻿<Solution>
+  <Project Path="TimelineTool.Runtime.csproj" />
+  <Project Path="TimelineTool.Editor.csproj" />
+</Solution>

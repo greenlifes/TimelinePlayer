@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace TimelineTool.Editor
+namespace TimelinePlayer.Editor
 {
     /// <summary>
     /// Watches for .playable file saves and automatically syncs the paired

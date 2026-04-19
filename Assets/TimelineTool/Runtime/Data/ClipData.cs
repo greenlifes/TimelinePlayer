@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TimelineTool
+namespace TimelinePlayer
 {
     /// <summary>
     /// Represents a single clip within a track, storing timing in frames (1 frame = 1/60 sec)

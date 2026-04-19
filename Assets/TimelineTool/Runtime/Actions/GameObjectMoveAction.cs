@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TimelineTool.Actions
+namespace TimelinePlayer.Actions
 {
     /// <summary>
     /// Activates / deactivates a GameObject from the bound ReferenceHub on enter and exit.
@@ -20,7 +20,7 @@ namespace TimelineTool.Actions
 
         public override void OnEnter(ReferenceHub hub)
         {
-            target = hub.Get<TransformEntry>(targetKey);
+            target = hub.GetEntry<TransformEntry>(targetKey);
             originalPosition = target.Value.position;
         }
 
@@ -32,6 +32,11 @@ namespace TimelineTool.Actions
         public override void OnExit(ReferenceHub hub)
         {
             if (returnOrigin) { target.Value.position = originalPosition; }
+        }
+
+        public override void OnCancel(ReferenceHub hub)
+        {
+            if (target?.Value != null) target.Value.position = originalPosition;
         }
     }
 }

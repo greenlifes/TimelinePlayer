@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace TimelineTool
+namespace TimelinePlayer
 {
     /// <summary>
     /// Represents a single track exported from the Timeline.

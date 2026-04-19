@@ -4,7 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace TimelineTool
+namespace TimelinePlayer
 {
     /// <summary>
     /// Time-based linear playback engine.
@@ -31,8 +31,10 @@ namespace TimelineTool
 
         private CancellationTokenSource _cts;
         private Dictionary<string, ReferenceHub> _bindingMap;
+        private bool _isPaused;
 
         public bool IsPlaying { get; private set; }
+        public bool IsPaused  => _isPaused;
 
         // -----------------------------------------------------------------------
         // Public API
@@ -40,16 +42,21 @@ namespace TimelineTool
         public void Play()
         {
             if (IsPlaying) Stop();
+            _isPaused = false;
             RebuildBindingMap();
             _cts = new CancellationTokenSource();
             PlayAsync(_cts.Token).Forget();
         }
+
+        public void Pause()  => _isPaused = true;
+        public void Resume() => _isPaused = false;
 
         public void Stop()
         {
             _cts?.Cancel();
             _cts?.Dispose();
             _cts = null;
+            _isPaused = false;
             IsPlaying = false;
         }
 
@@ -91,10 +98,15 @@ namespace TimelineTool
             {
                 if (ct.IsCancellationRequested) break;
 
-                TickFrame(allClips, entered, exited, elapsed);
+                if (!_isPaused)
+                {
+                    TickFrame(allClips, entered, exited, elapsed);
+                }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
-                elapsed += Time.deltaTime;
+
+                if (!_isPaused)
+                    elapsed += Time.deltaTime;
             }
 
             // ---- Cleanup: exit any clips still active at sequence end -----
@@ -106,6 +118,18 @@ namespace TimelineTool
                     {
                         exited.Add(clip);
                         clip.actionData?.OnExit(hub);
+                    }
+                }
+            }
+            else
+            {
+                // Cancelled mid-play: revert any active clips to their pre-enter state
+                foreach (var (clip, hub) in allClips)
+                {
+                    if (entered.Contains(clip) && !exited.Contains(clip))
+                    {
+                        exited.Add(clip);
+                        clip.actionData?.OnCancel(hub);
                     }
                 }
             }

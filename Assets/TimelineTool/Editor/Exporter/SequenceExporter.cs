@@ -3,7 +3,7 @@ using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Timeline;
 
-namespace TimelineTool.Editor
+namespace TimelinePlayer.Editor
 {
     /// <summary>
     /// Utility for building TimelineSequenceData from a TimelineAsset.

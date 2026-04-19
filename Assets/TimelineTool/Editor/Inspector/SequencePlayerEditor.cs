@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace TimelineTool.Editor
+namespace TimelinePlayer.Editor
 {
     [CustomEditor(typeof(SequencePlayer))]
     public class SequencePlayerEditor : UnityEditor.Editor

@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace TimelineTool.Editor
+namespace TimelinePlayer.Editor
 {
     /// <summary>
     /// PropertyDrawer for [SerializeReference] AbstractActionData fields.

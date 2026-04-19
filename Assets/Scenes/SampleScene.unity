@@ -640,26 +640,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65064bd482631b54d90ca0cb49e90bb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TimelineTool.Runtime::TimelineTool.ReferenceHub
-  gameObjectEntries:
-  - Key: Cube
-    _value: {fileID: 676963660}
-  - Key: Move
-    _value: {fileID: 2017927102}
-  transformEntries:
-  - Key: Move2
-    _value: {fileID: 2017927103}
-  - Key: 
-    _value: {fileID: 2017927103}
-  monoBehaviourEntries: []
-  intEntries: []
-  floatEntries: []
-  boolEntries:
-  - Key: 
-    _value: 0
-  stringEntries: []
-  vector2Entries: []
-  vector3Entries: []
-  colorEntries: []
+  _refEntries:
+  - rid: 595517911463362754
+  - rid: 595517911463362755
+  - rid: 595517911463362756
+  references:
+    version: 2
+    RefIds:
+    - rid: 595517911463362754
+      type: {class: GameObjectEntry, ns: TimelinePlayer, asm: TimelineTool.Runtime}
+      data:
+        Key: 
+        Type: 0
+        _value: {fileID: 0}
+    - rid: 595517911463362755
+      type: {class: GameObjectEntry, ns: TimelinePlayer, asm: TimelineTool.Runtime}
+      data:
+        Key: 
+        Type: 0
+        _value: {fileID: 0}
+    - rid: 595517911463362756
+      type: {class: GameObjectEntry, ns: TimelinePlayer, asm: TimelineTool.Runtime}
+      data:
+        Key: 
+        Type: 0
+        _value: {fileID: 0}
 --- !u!114 &1928780967
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -672,9 +677,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 477a4b8cf9a2ced4ca36eda8c5a557ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TimelineTool.Runtime::TimelineTool.SequencePlayer
-  sequenceData: {fileID: 11400000, guid: 94c614709c39595469a71dbb6069a748, type: 2}
-  referenceHub: {fileID: 1928780966}
-  bindings: []
+  _sequenceData: {fileID: 0}
+  _referenceHub: {fileID: 0}
+  _bindings: []
 --- !u!1 &2017927102
 GameObject:
   m_ObjectHideFlags: 0

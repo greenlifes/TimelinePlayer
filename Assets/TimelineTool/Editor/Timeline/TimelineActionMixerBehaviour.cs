@@ -1,6 +1,6 @@
 using UnityEngine.Playables;
 
-namespace TimelineTool.Editor
+namespace TimelinePlayer.Editor
 {
     /// <summary>
     /// Mixer behaviour for TimelineActionTrack.
