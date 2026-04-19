@@ -6,7 +6,6 @@ namespace TimelinePlayer
     public enum ReferenceType
     {
         GameObject,
-        Transform,
         MonoBehaviour,
         Int,
         Float,
@@ -33,11 +32,6 @@ namespace TimelinePlayer
     {
         [SerializeField] protected GameObject _value;
         public override GameObject Value => _value;
-    }
-    [Serializable]
-    public class TransformEntry : GameObjectEntry
-    {
-        public new Transform Value => _value != null ? _value.transform : null;
     }
     [Serializable]
     public class MonoBehaviourEntry : ReferenceEntry<MonoBehaviour>

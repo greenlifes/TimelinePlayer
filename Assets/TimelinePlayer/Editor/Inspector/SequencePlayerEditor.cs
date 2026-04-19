@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TimelinePlayer.Player;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,9 +16,9 @@ namespace TimelinePlayer.Editor
 
             EditorGUILayout.Space(8);
 
-            // ---- Button 1: Extract binding keys --------------------------------
-            if (GUILayout.Button("Extract Binding Keys from SequenceData", GUILayout.Height(28)))
-                ExtractBindingKeys(player);
+            // ---- Button 1: Extract track names as override bindings ------------
+            if (GUILayout.Button("Extract Track Names from SequenceData", GUILayout.Height(28)))
+                ExtractTrackNames(player);
 
             EditorGUILayout.Space(4);
 
@@ -26,8 +27,8 @@ namespace TimelinePlayer.Editor
             {
                 EditorGUILayout.BeginHorizontal();
 
-                var playStyle  = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold };
-                var stopStyle  = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold };
+                var playStyle = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold };
+                var stopStyle = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold };
                 playStyle.normal.textColor = Application.isPlaying ? new Color(0.2f, 0.8f, 0.2f) : Color.gray;
                 stopStyle.normal.textColor = Application.isPlaying ? new Color(0.9f, 0.3f, 0.3f) : Color.gray;
 
@@ -52,11 +53,11 @@ namespace TimelinePlayer.Editor
 
         // ------------------------------------------------------------------------
 
-        private void ExtractBindingKeys(SequencePlayer player)
+        private void ExtractTrackNames(SequencePlayer player)
         {
             var so = new SerializedObject(player);
             var sequenceDataProp = so.FindProperty("sequenceData");
-            var bindingsProp     = so.FindProperty("bindings");
+            var bindingsProp = so.FindProperty("bindings");
 
             if (sequenceDataProp.objectReferenceValue is not TimelineSequenceData sequenceData)
             {
@@ -64,34 +65,34 @@ namespace TimelinePlayer.Editor
                 return;
             }
 
-            // Collect existing keys so we don't create duplicates
-            var existingKeys = new HashSet<string>();
+            // Collect existing names so we don't create duplicates
+            var existingNames = new HashSet<string>();
             for (int i = 0; i < bindingsProp.arraySize; i++)
             {
-                string key = bindingsProp
+                string name = bindingsProp
                     .GetArrayElementAtIndex(i)
-                    .FindPropertyRelative("bindingKey")
+                    .FindPropertyRelative("TrackName")
                     .stringValue;
-                existingKeys.Add(key);
+                existingNames.Add(name);
             }
 
             int added = 0;
-            foreach (var track in sequenceData.tracks)
+            foreach (var track in sequenceData.Tracks)
             {
-                if (existingKeys.Contains(track.bindingKey)) continue;
+                if (existingNames.Contains(track.TrackName)) continue;
 
                 bindingsProp.arraySize++;
                 var elem = bindingsProp.GetArrayElementAtIndex(bindingsProp.arraySize - 1);
-                elem.FindPropertyRelative("bindingKey").stringValue      = track.bindingKey;
-                elem.FindPropertyRelative("hub").objectReferenceValue    = null;
+                elem.FindPropertyRelative("TrackName").stringValue = track.TrackName;
+                elem.FindPropertyRelative("OverrideHub").objectReferenceValue = null;
                 added++;
             }
 
             so.ApplyModifiedProperties();
 
             Debug.Log(added > 0
-                ? $"[TimelineTool] Added {added} binding key(s) to SequencePlayer."
-                : "[TimelineTool] All binding keys already present.");
+                ? $"[TimelineTool] Added {added} override binding(s) to SequencePlayer."
+                : "[TimelineTool] All track names already present.");
         }
     }
 }

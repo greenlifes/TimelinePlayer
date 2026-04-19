@@ -86,24 +86,10 @@ namespace TimelinePlayer.Editor
             var newType = (ReferenceType)EditorGUI.EnumPopup(typeRect, curType);
             if (EditorGUI.EndChangeCheck() && newType != curType)
             {
-                var oldValueProp = prop.FindPropertyRelative("_value");
-                UnityEngine.Object oldObjRef = null;
-                if (oldValueProp != null && oldValueProp.propertyType == SerializedPropertyType.ObjectReference)
-                    oldObjRef = oldValueProp.objectReferenceValue;
-
                 var replacement = CreateEntry(newType);
                 replacement.Key = entry.Key;          // preserve key
                 prop.managedReferenceValue = replacement;
                 serializedObject.ApplyModifiedProperties();
-
-                // GameObject <-> Transform 共用 GameObject 欄位,切換時保留 reference
-                if (oldObjRef is GameObject go &&
-                    (newType == ReferenceType.GameObject || newType == ReferenceType.Transform))
-                {
-                    var newValueProp = prop.FindPropertyRelative("_value");
-                    if (newValueProp != null) newValueProp.objectReferenceValue = go;
-                    serializedObject.ApplyModifiedProperties();
-                }
                 return;                               // value field belongs to new instance
             }
 
@@ -119,18 +105,6 @@ namespace TimelinePlayer.Editor
         {
             switch (entry)
             {
-                case TransformEntry:
-                {
-                    var currentGo = valueProp.objectReferenceValue as GameObject;
-                    var currentTf = currentGo != null ? currentGo.transform : null;
-                    EditorGUI.BeginChangeCheck();
-                    var newTf = (Transform)EditorGUI.ObjectField(
-                        rect, currentTf, typeof(Transform), allowSceneObjects: true);
-                    if (EditorGUI.EndChangeCheck())
-                        valueProp.objectReferenceValue = newTf != null ? newTf.gameObject : null;
-                    break;
-                }
-
                 case GameObjectEntry:
                     EditorGUI.ObjectField(rect, valueProp, typeof(GameObject), GUIContent.none);
                     break;
@@ -164,7 +138,6 @@ namespace TimelinePlayer.Editor
         private static ReferenceEntryBase CreateEntry(ReferenceType type) => type switch
         {
             ReferenceType.GameObject => new GameObjectEntry { Type = ReferenceType.GameObject },
-            ReferenceType.Transform => new TransformEntry { Type = ReferenceType.Transform },
             ReferenceType.MonoBehaviour => new MonoBehaviourEntry { Type = ReferenceType.MonoBehaviour },
             ReferenceType.Int => new IntEntry { Type = ReferenceType.Int },
             ReferenceType.Float => new FloatEntry { Type = ReferenceType.Float },
@@ -178,7 +151,6 @@ namespace TimelinePlayer.Editor
 
         private static ReferenceType ToReferenceType(ReferenceEntryBase entry) => entry switch
         {
-            TransformEntry => ReferenceType.Transform,
             GameObjectEntry => ReferenceType.GameObject,
             MonoBehaviourEntry => ReferenceType.MonoBehaviour,
             IntEntry => ReferenceType.Int,

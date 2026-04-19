@@ -4,7 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace TimelinePlayer
+namespace TimelinePlayer.Player
 {
     /// <summary>
     /// Time-based linear playback engine.
@@ -20,8 +20,8 @@ namespace TimelinePlayer
         [Serializable]
         public class OverrideBinding
         {
-            [Tooltip("Must match the bindingKey in TrackData (= Timeline track name).")]
-            public string bindingKey;
+            [Tooltip("Must match the TrackName in TrackData.")]
+            public string TrackName;
             public ReferenceHub OverrideHub;
         }
 
@@ -70,7 +70,7 @@ namespace TimelinePlayer
             _bindingMap = new Dictionary<string, ReferenceHub>(StringComparer.Ordinal);
             foreach (var b in bindings)
             {
-                if (b.OverrideHub != null) { _bindingMap[b.bindingKey] = b.OverrideHub; }
+                if (b.OverrideHub != null) { _bindingMap[b.TrackName] = b.OverrideHub; }
             }
         }
 
@@ -78,7 +78,7 @@ namespace TimelinePlayer
 
         private async UniTaskVoid PlayAsync(CancellationToken ct)
         {
-            if (sequenceData == null || sequenceData.tracks == null)
+            if (sequenceData == null || sequenceData.Tracks == null)
             {
                 Debug.LogWarning("[SequencePlayer] No SequenceData assigned.", this);
                 return;
@@ -86,9 +86,10 @@ namespace TimelinePlayer
 
             IsPlaying = true;
 
-            var allClips = BuildResolvedClipList();
-            var entered  = new HashSet<ClipData>(ReferenceEqualityComparer.Instance);
-            var exited   = new HashSet<ClipData>(ReferenceEqualityComparer.Instance);
+            var allClips  = BuildResolvedClipList();
+            var entered   = new HashSet<ClipData>(ReferenceEqualityComparer.Instance);
+            var exited    = new HashSet<ClipData>(ReferenceEqualityComparer.Instance);
+            float frameRate = sequenceData.FrameRate;
 
             float elapsed   = 0f;
             float totalTime = sequenceData.TotalDuration;
@@ -100,7 +101,7 @@ namespace TimelinePlayer
 
                 if (!_isPaused)
                 {
-                    TickFrame(allClips, entered, exited, elapsed);
+                    TickFrame(allClips, entered, exited, elapsed, frameRate);
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
@@ -117,7 +118,7 @@ namespace TimelinePlayer
                     if (entered.Contains(clip) && !exited.Contains(clip))
                     {
                         exited.Add(clip);
-                        clip.actionData?.OnExit(hub);
+                        clip.ActionData?.OnExit(hub);
                     }
                 }
             }
@@ -129,7 +130,7 @@ namespace TimelinePlayer
                     if (entered.Contains(clip) && !exited.Contains(clip))
                     {
                         exited.Add(clip);
-                        clip.actionData?.OnCancel(hub);
+                        clip.ActionData?.OnCancel(hub);
                     }
                 }
             }
@@ -141,13 +142,16 @@ namespace TimelinePlayer
             List<(ClipData clip, ReferenceHub hub)> allClips,
             HashSet<ClipData> entered,
             HashSet<ClipData> exited,
-            float elapsed)
+            float elapsed,
+            float frameRate)
         {
             foreach (var (clip, hub) in allClips)
             {
-                if (clip.actionData == null) continue;
+                if (clip.ActionData == null) continue;
 
-                bool inRange    = elapsed >= clip.StartTime && elapsed < clip.EndTime;
+                float startTime = clip.GetStartTime(frameRate);
+                float endTime   = clip.GetEndTime(frameRate);
+                bool inRange    = elapsed >= startTime && elapsed < endTime;
                 bool hasEntered = entered.Contains(clip);
                 bool hasExited  = exited.Contains(clip);
 
@@ -156,16 +160,16 @@ namespace TimelinePlayer
                 if (inRange && !hasEntered)
                 {
                     entered.Add(clip);
-                    clip.actionData.OnEnter(hub);
+                    clip.ActionData.OnEnter(hub);
                 }
 
                 if (inRange && hasEntered)
-                    clip.actionData.OnUpdate(hub, clip.GetNormalizedTime(elapsed));
+                    clip.ActionData.OnUpdate(hub, clip.GetNormalizedTime(elapsed, frameRate));
 
-                if (!inRange && hasEntered && elapsed >= clip.EndTime)
+                if (!inRange && hasEntered && elapsed >= endTime)
                 {
                     exited.Add(clip);
-                    clip.actionData.OnExit(hub);
+                    clip.ActionData.OnExit(hub);
                 }
             }
         }
@@ -173,15 +177,15 @@ namespace TimelinePlayer
         private List<(ClipData clip, ReferenceHub hub)> BuildResolvedClipList()
         {
             var list = new List<(ClipData clip, ReferenceHub hub)>();
-            foreach (var track in sequenceData.tracks)
+            foreach (var track in sequenceData.Tracks)
             {
-                var overrided = _bindingMap.TryGetValue(track.bindingKey, out var hub);
-                foreach (var clip in track.clips)
+                var overrided = _bindingMap.TryGetValue(track.TrackName, out var hub);
+                foreach (var clip in track.Clips)
                 {
                     list.Add((clip, overrided? hub : referenceHub));
                 }
             }
-            list.Sort((a, b) => a.clip.startFrame.CompareTo(b.clip.startFrame));
+            list.Sort((a, b) => a.clip.StartFrame.CompareTo(b.clip.StartFrame));
             return list;
         }
 

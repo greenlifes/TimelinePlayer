@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TimelinePlayer.Timeline;
 using UnityEditor;
+using UnityEditor.Timeline;
 using UnityEngine;
 
 namespace TimelinePlayer.Editor
@@ -17,16 +19,16 @@ namespace TimelinePlayer.Editor
     /// Expanded block: draws each serialized field of the concrete instance inline.
     /// </summary>
     [CustomPropertyDrawer(typeof(ActionClip), useForChildren: true)]
-    public class AbstractActionDataDrawer : PropertyDrawer
+    public class ActionClipDrawer : PropertyDrawer
     {
-        private static List<Type>   _types;
-        private static string[]     _typeNames;   // index 0 = "(None)"
+        private static List<Type> _types;
+        private static string[] _typeNames;   // index 0 = "(None)"
         private static GUIContent[] _typeLabels;
 
-        private const float IndentOfs  = 10f;
-        private const float ClearBtnW  = 22f;
-        private const float TopPad     = 2f;
-        private const float BottomPad  = 4f;
+        private const float IndentOfs = 10f;
+        private const float ClearBtnW = 22f;
+        private const float TopPad = 2f;
+        private const float BottomPad = 4f;
 
         // -----------------------------------------------------------------------
 
@@ -51,18 +53,18 @@ namespace TimelinePlayer.Editor
             EnsureTypes();
             EditorGUI.BeginProperty(position, label, property);
 
-            float lineH   = EditorGUIUtility.singleLineHeight;
+            float lineH = EditorGUIUtility.singleLineHeight;
             float spacing = EditorGUIUtility.standardVerticalSpacing;
-            float y       = position.y;
-            bool  hasVal  = property.managedReferenceValue != null;
+            float y = position.y;
+            bool hasVal = property.managedReferenceValue != null;
 
             // ---- Header row ------------------------------------------------
             float labelW = EditorGUIUtility.labelWidth;
             float clearW = hasVal ? ClearBtnW : 0f;
-            float dropW  = position.width - labelW - clearW;
+            float dropW = position.width - labelW - clearW;
 
-            var labelRect = new Rect(position.x,             y, labelW,          lineH);
-            var dropRect  = new Rect(position.x + labelW,    y, dropW  - 2f,     lineH);
+            var labelRect = new Rect(position.x, y, labelW, lineH);
+            var dropRect = new Rect(position.x + labelW, y, dropW - 2f, lineH);
             var clearRect = new Rect(position.x + position.width - ClearBtnW, y, ClearBtnW, lineH);
 
             // Foldout on label (only meaningful when a value exists)
@@ -73,18 +75,21 @@ namespace TimelinePlayer.Editor
 
             // Type dropdown
             var curType = property.managedReferenceValue?.GetType();
-            int curIdx  = curType != null ? _types.IndexOf(curType) + 1 : 0;
+            int curIdx = curType != null ? _types.IndexOf(curType) + 1 : 0;
 
             EditorGUI.BeginChangeCheck();
             int newIdx = EditorGUI.Popup(dropRect, curIdx, _typeLabels);
             if (EditorGUI.EndChangeCheck())
             {
-                property.managedReferenceValue = newIdx == 0
+                var newInstance = newIdx == 0
                     ? null
                     : Activator.CreateInstance(_types[newIdx - 1]);
 
+                property.managedReferenceValue = newInstance;
                 property.isExpanded = newIdx != 0;
                 property.serializedObject.ApplyModifiedProperties();
+
+                SyncOwningTimelineClipName(property, newInstance?.GetType().Name);
             }
 
             // Clear button
@@ -93,6 +98,8 @@ namespace TimelinePlayer.Editor
                 property.managedReferenceValue = null;
                 property.isExpanded = false;
                 property.serializedObject.ApplyModifiedProperties();
+
+                SyncOwningTimelineClipName(property, null);
             }
 
             y += lineH + spacing;
@@ -115,7 +122,7 @@ namespace TimelinePlayer.Editor
             EditorGUI.indentLevel = prevIndent + 1;
 
             var copy = property.Copy();
-            var end  = property.GetEndProperty(true);
+            var end = property.GetEndProperty(true);
             if (copy.NextVisible(true))
             {
                 do
@@ -139,7 +146,7 @@ namespace TimelinePlayer.Editor
         private static IEnumerable<float> ChildHeights(SerializedProperty property)
         {
             var copy = property.Copy();
-            var end  = property.GetEndProperty(true);
+            var end = property.GetEndProperty(true);
             if (!copy.NextVisible(true)) yield break;
             do
             {
@@ -147,6 +154,34 @@ namespace TimelinePlayer.Editor
                 yield return EditorGUI.GetPropertyHeight(copy, true);
             }
             while (copy.NextVisible(false));
+        }
+
+        /// <summary>
+        /// When the ActionClip lives on a TimelineActionClipHolder, mirror the newly
+        /// selected type name onto the owning TimelineClip so the clip block shows it.
+        /// Only runs on type-change / clear events — field edits do not touch displayName.
+        /// </summary>
+        private static void SyncOwningTimelineClipName(SerializedProperty property, string typeName)
+        {
+            if (property.serializedObject.targetObject is not TimelineActionClipHolder holder) return;
+
+            var timeline = TimelineEditor.inspectedAsset;
+            if (timeline == null) return;
+
+            foreach (var track in timeline.GetOutputTracks())
+            {
+                if (track is not TimelineActionTrack) continue;
+                foreach (var clip in track.GetClips())
+                {
+                    if (clip.asset != holder) continue;
+
+                    clip.displayName = string.IsNullOrEmpty(typeName)
+                        ? holder.GetType().Name
+                        : typeName;
+                    EditorUtility.SetDirty(timeline);
+                    return;
+                }
+            }
         }
 
         private static void EnsureTypes()
@@ -160,13 +195,13 @@ namespace TimelinePlayer.Editor
                 .OrderBy(t => t.Name)
                 .ToList();
 
-            _typeNames  = new string[_types.Count + 1];
+            _typeNames = new string[_types.Count + 1];
             _typeLabels = new GUIContent[_types.Count + 1];
-            _typeNames[0]  = "(None)";
+            _typeNames[0] = "(None)";
             _typeLabels[0] = new GUIContent("(None)");
             for (int i = 0; i < _types.Count; i++)
             {
-                _typeNames[i + 1]  = _types[i].Name;
+                _typeNames[i + 1] = _types[i].Name;
                 _typeLabels[i + 1] = new GUIContent(_types[i].Name, _types[i].FullName);
             }
         }

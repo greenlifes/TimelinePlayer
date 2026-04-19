@@ -47,9 +47,9 @@ namespace TimelinePlayer.Actions
         public override void OnUpdate(ReferenceHub hub, float normalizedTime) { }
 
         public override void OnExit(ReferenceHub hub)
-            => SetActiveState(_targetEntry, ActiveStateOnEnter);
+            => SetActiveState(_targetEntry, ActiveStateOnEnd);
 
         public override void OnCancel(ReferenceHub hub)
-            => SetActiveState(_targetEntry, ActiveStateOnEnter);
+            => SetActiveState(_targetEntry, ActiveStateOnEnd);
     }
 }

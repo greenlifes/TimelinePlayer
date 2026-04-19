@@ -5,6 +5,8 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using TimelinePlayer.Player;
+using TimelinePlayer.Timeline;
 
 namespace TimelinePlayer.Editor
 {
@@ -67,7 +69,7 @@ namespace TimelinePlayer.Editor
             string timelineGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(timeline));
 
             var newData = SequenceExporter.BuildSequenceData(timeline);
-            newData.sourceTimelineGuid = timelineGuid;
+            newData.SourceTimelineGuid = timelineGuid;
 
             // Prefer to find by stored GUID so the renamed file is updated in-place.
             // Fall back to the default naming-convention path for backward compatibility.
@@ -84,7 +86,7 @@ namespace TimelinePlayer.Editor
                 EditorUtility.SetDirty(existing);
                 Object.DestroyImmediate(newData);
                 finalAsset = existing;
-                Debug.Log($"[TimelineTool] Synced → {existingPath}  ({existing.tracks.Count} track(s))");
+                Debug.Log($"[TimelineTool] Synced → {existingPath}  ({existing.Tracks.Count} track(s))");
             }
             else
             {
@@ -94,7 +96,7 @@ namespace TimelinePlayer.Editor
                 newData.name = Path.GetFileNameWithoutExtension(defaultSoPath);
                 AssetDatabase.CreateAsset(newData, defaultSoPath);
                 finalAsset = newData;
-                Debug.Log($"[TimelineTool] Created → {defaultSoPath}  ({newData.tracks.Count} track(s))");
+                Debug.Log($"[TimelineTool] Created → {defaultSoPath}  ({newData.Tracks.Count} track(s))");
             }
 
             BindSceneSequencePlayers(timeline, finalAsset);
@@ -113,7 +115,7 @@ namespace TimelinePlayer.Editor
             {
                 var path  = AssetDatabase.GUIDToAssetPath(guid);
                 var asset = AssetDatabase.LoadAssetAtPath<TimelineSequenceData>(path);
-                if (asset != null && asset.sourceTimelineGuid == timelineGuid)
+                if (asset != null && asset.SourceTimelineGuid == timelineGuid)
                     return asset;
             }
             return null;

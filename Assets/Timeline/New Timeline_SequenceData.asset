@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 070b827149f90d14d853329ef1214df8, type: 3}
+  m_Name: New Timeline_SequenceData
+  m_EditorClassIdentifier: Assembly-CSharp::TimelinePlayer.TimelineSequenceData
+  FrameRate: 60
+  TotalFrames: 1478
+  tracks:
+  - TrackName: Timeline Action Track
+    Clips:
+    - StartFrame: 30
+      DurationFrames: 60
+      ActionData:
+        rid: 595517932105105540
+    - StartFrame: 120
+      DurationFrames: 30
+      ActionData:
+        rid: 595517932105105541
+    - StartFrame: 1178
+      DurationFrames: 300
+      ActionData:
+        rid: -2
+  - TrackName: Timeline Action Track (1)
+    Clips:
+    - StartFrame: 61
+      DurationFrames: 89
+      ActionData:
+        rid: 595517932105105542
+  - TrackName: Timeline Action Track (2)
+    Clips:
+    - StartFrame: 105
+      DurationFrames: 45
+      ActionData:
+        rid: -2
+  sourceTimelineGuid: e3b63bdb55c6b6c43a5bdd821c2e874c
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 595517932105105540
+      type: {class: GameObjectActiveAction, ns: TimelinePlayer.Actions, asm: Assembly-CSharp}
+      data:
+        GameObjectKey: Cube1
+        ActiveStateOnEnter: 0
+        ActiveStateOnEnd: 1
+    - rid: 595517932105105541
+      type: {class: GameObjectActiveAction, ns: TimelinePlayer.Actions, asm: Assembly-CSharp}
+      data:
+        GameObjectKey: Cube1
+        ActiveStateOnEnter: 0
+        ActiveStateOnEnd: 1
+    - rid: 595517932105105542
+      type: {class: GameObjectActiveAction, ns: TimelinePlayer.Actions, asm: Assembly-CSharp}
+      data:
+        GameObjectKey: Cube2
+        ActiveStateOnEnter: 0
+        ActiveStateOnEnd: 1

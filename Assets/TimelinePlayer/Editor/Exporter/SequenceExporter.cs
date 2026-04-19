@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Timeline;
+using TimelinePlayer.Timeline;
 
 namespace TimelinePlayer.Editor
 {
@@ -12,8 +13,6 @@ namespace TimelinePlayer.Editor
     /// </summary>
     public static class SequenceExporter
     {
-        internal const int FPS = 60;
-
         // -----------------------------------------------------------------------
 
         [MenuItem("TimelineTool/Force Sync Active Timeline Now")]
@@ -49,7 +48,9 @@ namespace TimelinePlayer.Editor
         public static TimelineSequenceData BuildSequenceData(TimelineAsset timelineAsset)
         {
             var data = ScriptableObject.CreateInstance<TimelineSequenceData>();
-            data.totalFrames = Mathf.RoundToInt((float)timelineAsset.duration * FPS);
+            float frameRate = (float)timelineAsset.editorSettings.frameRate;
+            data.FrameRate   = frameRate;
+            data.TotalFrames = Mathf.RoundToInt((float)timelineAsset.duration * frameRate);
 
             foreach (var track in timelineAsset.GetOutputTracks())
             {
@@ -57,23 +58,22 @@ namespace TimelinePlayer.Editor
 
                 var trackData = new TrackData
                 {
-                    trackName  = actionTrack.name,
-                    bindingKey = actionTrack.name
+                    TrackName = actionTrack.name
                 };
 
                 foreach (var clip in actionTrack.GetClips())
                 {
-                    if (clip.asset is not TimelineActionClip actionClip) continue;
+                    if (clip.asset is not TimelineActionClipHolder actionClip) continue;
 
-                    trackData.clips.Add(new ClipData
+                    trackData.Clips.Add(new ClipData
                     {
-                        startFrame     = Mathf.RoundToInt((float)clip.start    * FPS),
-                        durationFrames = Mathf.RoundToInt((float)clip.duration * FPS),
-                        actionData     = actionClip.actionData
+                        StartFrame     = Mathf.RoundToInt((float)clip.start * frameRate),
+                        DurationFrames = Mathf.RoundToInt((float)clip.duration * frameRate),
+                        ActionData     = actionClip.ActionClip
                     });
                 }
 
-                data.tracks.Add(trackData);
+                data.Tracks.Add(trackData);
             }
 
             return data;
