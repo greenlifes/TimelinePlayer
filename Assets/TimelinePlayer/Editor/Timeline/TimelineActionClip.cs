@@ -14,7 +14,7 @@ namespace TimelinePlayer.Editor
     {
         [Tooltip("Inline action instance serialized directly into this clip asset.")]
         [UnityEngine.SerializeReference]
-        public AbstractActionData actionData;
+        public ActionClip actionData;
 
         public ClipCaps clipCaps => ClipCaps.None;
 

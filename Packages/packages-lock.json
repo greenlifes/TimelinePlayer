@@ -7,6 +7,13 @@
       "dependencies": {},
       "hash": "a9e27c03d411d2fca01cc7410c24c97cd77cb539"
     },
+    "com.midou.utility": {
+      "version": "https://github.com/greenlifes/MidouUtility.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "5f8c3747550522a4d0604a7acf2340c8a5f00320"
+    },
     "com.unity.ext.nunit": {
       "version": "2.0.5",
       "depth": 2,

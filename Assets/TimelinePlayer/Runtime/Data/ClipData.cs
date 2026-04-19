@@ -17,7 +17,7 @@ namespace TimelinePlayer
 
         [Tooltip("Inline action instance — each clip owns its own independent instance.")]
         [SerializeReference]
-        public AbstractActionData actionData;
+        public ActionClip actionData;
 
         public float StartTime    => startFrame / 60f;
         public float Duration     => durationFrames / 60f;

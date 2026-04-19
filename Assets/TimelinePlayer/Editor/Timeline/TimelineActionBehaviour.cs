@@ -10,7 +10,7 @@ namespace TimelinePlayer.Editor
     /// </summary>
     public class TimelineActionBehaviour : PlayableBehaviour
     {
-        public AbstractActionData actionData;
+        public ActionClip actionData;
 
         private bool         _hasEntered;
         private ReferenceHub _hub;

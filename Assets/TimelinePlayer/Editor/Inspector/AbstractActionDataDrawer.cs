@@ -16,7 +16,7 @@ namespace TimelinePlayer.Editor
     ///
     /// Expanded block: draws each serialized field of the concrete instance inline.
     /// </summary>
-    [CustomPropertyDrawer(typeof(AbstractActionData), useForChildren: true)]
+    [CustomPropertyDrawer(typeof(ActionClip), useForChildren: true)]
     public class AbstractActionDataDrawer : PropertyDrawer
     {
         private static List<Type>   _types;
@@ -156,7 +156,7 @@ namespace TimelinePlayer.Editor
             _types = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => { try { return a.GetTypes(); } catch { return Array.Empty<Type>(); } })
                 .Where(t => !t.IsAbstract && !t.IsGenericType
-                         && typeof(AbstractActionData).IsAssignableFrom(t))
+                         && typeof(ActionClip).IsAssignableFrom(t))
                 .OrderBy(t => t.Name)
                 .ToList();
 

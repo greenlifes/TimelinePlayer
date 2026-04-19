@@ -31,14 +31,13 @@ namespace TimelinePlayer
     [Serializable]
     public class GameObjectEntry : ReferenceEntry<GameObject>
     {
-        [SerializeField] private GameObject _value;
+        [SerializeField] protected GameObject _value;
         public override GameObject Value => _value;
     }
     [Serializable]
-    public class TransformEntry : ReferenceEntry<Transform>
+    public class TransformEntry : GameObjectEntry
     {
-        [SerializeField] private Transform _value;
-        public override Transform Value => _value;
+        public new Transform Value => _value != null ? _value.transform : null;
     }
     [Serializable]
     public class MonoBehaviourEntry : ReferenceEntry<MonoBehaviour>
