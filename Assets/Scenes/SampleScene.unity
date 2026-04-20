@@ -517,7 +517,7 @@ PlayableDirector:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1928780960}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_PlayableAsset: {fileID: 11400000, guid: e3b63bdb55c6b6c43a5bdd821c2e874c, type: 2}
   m_InitialState: 1
@@ -616,7 +616,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 477a4b8cf9a2ced4ca36eda8c5a557ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TimelineTool.Runtime::TimelineTool.SequencePlayer
-  _sequenceData: {fileID: 0}
+  _sequenceData: {fileID: 11400000, guid: 1154c57c9ea658144b0536ea29fb34d7, type: 2}
   _hub: {fileID: 1928780966}
   _overrideBindings: []
 --- !u!1 &2017927102
