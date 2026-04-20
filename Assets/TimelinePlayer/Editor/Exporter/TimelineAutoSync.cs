@@ -44,7 +44,7 @@ namespace TimelinePlayer.Editor
 
         private static void SyncAll(IEnumerable<string> playablePaths)
         {
-            bool anyChanged = false;
+            var anyChanged = false;
 
             foreach (var path in playablePaths)
             {
@@ -66,7 +66,7 @@ namespace TimelinePlayer.Editor
         /// </summary>
         internal static void SyncOne(TimelineAsset timeline, string defaultSoPath)
         {
-            string timelineGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(timeline));
+            var timelineGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(timeline));
 
             var newData = SequenceExporter.BuildSequenceData(timeline);
             newData.SourceTimelineGuid = timelineGuid;
@@ -80,7 +80,7 @@ namespace TimelinePlayer.Editor
 
             if (existing != null)
             {
-                string existingPath = AssetDatabase.GetAssetPath(existing);
+                var existingPath = AssetDatabase.GetAssetPath(existing);
                 newData.name = existing.name;   // CopySerialized also copies 'name'; keep the existing filename
                 EditorUtility.CopySerialized(newData, existing);
                 EditorUtility.SetDirty(existing);
@@ -113,7 +113,7 @@ namespace TimelinePlayer.Editor
 
             foreach (var guid in AssetDatabase.FindAssets("t:TimelineSequenceData"))
             {
-                var path  = AssetDatabase.GUIDToAssetPath(guid);
+                var path = AssetDatabase.GUIDToAssetPath(guid);
                 var asset = AssetDatabase.LoadAssetAtPath<TimelineSequenceData>(path);
                 if (asset != null && asset.SourceTimelineGuid == timelineGuid)
                     return asset;
@@ -127,9 +127,7 @@ namespace TimelinePlayer.Editor
         /// </summary>
         private static void BindSceneSequencePlayers(TimelineAsset timeline, TimelineSequenceData data)
         {
-#pragma warning disable CS0618
-            var directors = Object.FindObjectsOfType<PlayableDirector>();
-#pragma warning restore CS0618
+            var directors = Object.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
             foreach (var director in directors)
             {
                 if (director.playableAsset != timeline) continue;
@@ -159,8 +157,8 @@ namespace TimelinePlayer.Editor
 
         internal static string GetPairedPath(string playablePath)
         {
-            string dir  = Path.GetDirectoryName(playablePath)?.Replace('\\', '/');
-            string name = Path.GetFileNameWithoutExtension(playablePath);
+            var dir = Path.GetDirectoryName(playablePath)?.Replace('\\', '/');
+            var name = Path.GetFileNameWithoutExtension(playablePath);
             return $"{dir}/{name}_SequenceData.asset";
         }
 

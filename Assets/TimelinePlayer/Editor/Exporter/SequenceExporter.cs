@@ -48,8 +48,8 @@ namespace TimelinePlayer.Editor
         public static TimelineSequenceData BuildSequenceData(TimelineAsset timelineAsset)
         {
             var data = ScriptableObject.CreateInstance<TimelineSequenceData>();
-            float frameRate = (float)timelineAsset.editorSettings.frameRate;
-            data.FrameRate   = frameRate;
+            var frameRate = (float)timelineAsset.editorSettings.frameRate;
+            data.FrameRate = frameRate;
             data.TotalFrames = Mathf.RoundToInt((float)timelineAsset.duration * frameRate);
 
             foreach (var track in timelineAsset.GetOutputTracks())
@@ -67,9 +67,9 @@ namespace TimelinePlayer.Editor
 
                     trackData.Clips.Add(new ClipData
                     {
-                        StartFrame     = Mathf.RoundToInt((float)clip.start * frameRate),
+                        StartFrame = Mathf.RoundToInt((float)clip.start * frameRate),
                         DurationFrames = Mathf.RoundToInt((float)clip.duration * frameRate),
-                        ActionData     = actionClip.ActionClip
+                        ActionData = actionClip.ActionClip
                     });
                 }
 
