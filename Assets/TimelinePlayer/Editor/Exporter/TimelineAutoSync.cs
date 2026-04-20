@@ -143,7 +143,7 @@ namespace TimelinePlayer.Editor
                     player = Undo.AddComponent<SequencePlayer>(go);
 
                 var so = new SerializedObject(player);
-                so.FindProperty("sequenceData").objectReferenceValue = data;
+                so.FindProperty("_sequenceData").objectReferenceValue = data;
                 so.ApplyModifiedProperties();
 
                 EditorUtility.SetDirty(player);

@@ -1,4 +1,4 @@
 ﻿<Solution>
-  <Project Path="TimelineTool.Editor.csproj" />
-  <Project Path="TimelineTool.Runtime.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
 </Solution>

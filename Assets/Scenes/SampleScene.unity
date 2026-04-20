@@ -616,9 +616,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 477a4b8cf9a2ced4ca36eda8c5a557ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TimelineTool.Runtime::TimelineTool.SequencePlayer
-  sequenceData: {fileID: 11400000, guid: 1154c57c9ea658144b0536ea29fb34d7, type: 2}
-  referenceHub: {fileID: 1928780966}
-  bindings: []
+  _sequenceData: {fileID: 0}
+  _hub: {fileID: 1928780966}
+  _overrideBindings: []
 --- !u!1 &2017927102
 GameObject:
   m_ObjectHideFlags: 0
